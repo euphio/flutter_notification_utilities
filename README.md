@@ -1,4 +1,5 @@
 # flutter_notification_utilities
+[![Unit Tests](https://github.com/euphio/flutter_notification_utilities/actions/workflows/unit-tests.yml/badge.svg)](https://github.com/euphio/flutter_notification_utilities/actions/workflows/unit-tests.yml)
 
 A new Flutter plugin project.
 
