@@ -1,0 +1,102 @@
+name: Unit Tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  dart_tests:
+    name: Dart Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout repository
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # Set up Flutter
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+
+      # Install dependencies
+      - name: Install dependencies
+        run: flutter pub get
+
+      # Run Dart tests
+      - name: Run Dart tests
+        run: flutter test
+
+  ios:
+    name: iOS (Swift) Unit Tests
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        ios_version: [17.0.1]
+        device: [iPhone 15]
+
+    steps:
+      # Check out the repository
+      - name: Check out repository
+        uses: actions/checkout@v2
+
+      # Install Flutter
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+
+      # Fetch dependencies
+      - name: Run flutter pub get
+        run: flutter pub get
+
+      # Disable code signing
+      - name: Disable code signing
+        run: |
+          sed -i '' 's/CODE_SIGN_IDENTITY = .*;/CODE_SIGN_IDENTITY = "";/' example/ios/Runner.xcodeproj/project.pbxproj
+          sed -i '' 's/CODE_SIGNING_REQUIRED = YES;/CODE_SIGNING_REQUIRED = NO;/' example/ios/Runner.xcodeproj/project.pbxproj
+          sed -i '' 's/CODE_SIGNING_ALLOWED = YES;/CODE_SIGNING_ALLOWED = NO;/' example/ios/Runner.xcodeproj/project.pbxproj
+          sed -i '' 's/ProvisioningStyle = Automatic;/ProvisioningStyle = Manual;/' example/ios/Runner.xcodeproj/project.pbxproj
+
+      # Install CocoaPods dependencies
+      - name: Install CocoaPods
+        run: pod install
+        working-directory: example/ios
+
+      # Run iOS Tests with verbose logs
+      - name: Run iOS Tests on ${{ matrix.device }} (iOS ${{ matrix.ios_version }})
+        run: |
+          xcodebuild test \
+            -workspace example/ios/Runner.xcworkspace \
+            -scheme Runner \
+            -sdk iphonesimulator \
+            -destination "platform=iOS Simulator,name=${{ matrix.device }},OS=${{ matrix.ios_version }}" \
+            -quiet
+
+  android:
+    name: Android (Kotlin) Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout repository
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # Install Java
+      - name: Install Java 17
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'adopt'
+          java-version: '17'
+
+      # Set up Flutter
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+
+      # Install dependencies
+      - name: Install dependencies
+        run: flutter pub get
+
+      # Run Android integration tests
+      - name: Run Android integration tests
+        run: gradle test
+        working-directory: example/android
